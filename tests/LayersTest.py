@@ -1,5 +1,5 @@
 import unittest
-from ann.Layers import HiddenLayer, LinearRegressionLayer
+from ann.Layers import HiddenLayer, LinearRegressionLayer, LogisticRegressionLayer
 
 
 class HiddenLayerTest(unittest.TestCase):
@@ -51,3 +51,34 @@ class LinearRegressionTest(unittest.TestCase):
         predictions_vector = linear_regression_layer.predict().eval()[0]
         for prediction in predictions_vector:
             self.assertTrue(-1 <= prediction <= 1)
+
+
+class LogisticRegressionTest(unittest.TestCase):
+    def test_error_same_class(self):
+        # Given
+        classification = 0
+        input_vector = [[classification]]
+
+        logistic_regression_layer = LogisticRegressionLayer(seed=1234, input_stream=input_vector, n_in=1, n_out=1)
+
+        # When
+        error = logistic_regression_layer.error([classification]).eval()
+
+        # Then
+        difference = 0
+        self.assertEqual(error, difference)
+
+    def test_error_different_class(self):
+        # Given
+        class1 = 0
+        class2 = 1
+        input_vector = [[class1]]
+
+        logistic_regression_layer = LogisticRegressionLayer(seed=1234, input_stream=input_vector, n_in=1, n_out=1)
+
+        # When
+        error = logistic_regression_layer.error([class2]).eval()
+
+        # Then
+        difference = 1
+        self.assertEqual(error, difference)

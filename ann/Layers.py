@@ -38,12 +38,12 @@ class LinearRegressionLayer(object):
         self.n_in = n_in
         self.n_out = n_out
 
-        self.W = _init_weights(n_in, n_out, seed)
-        self.b = _init_bias(n_out)
-        self.params = [self.W, self.b]
+        self.weights = _init_weights(n_in, n_out, seed)
+        self.bias = _init_bias(n_out)
+        self.params = [self.weights, self.bias]
 
         self.input_stream = input_stream
-        self.y_prediction = tensor.dot(input_stream, self.W) + self.b
+        self.y_prediction = tensor.dot(input_stream, self.weights) + self.bias
 
     def predict(self):
         return self.y_prediction

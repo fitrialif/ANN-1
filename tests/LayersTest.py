@@ -51,6 +51,3 @@ class LinearRegressionTest(unittest.TestCase):
         predictions_vector = linear_regression_layer.predict().eval()[0]
         for prediction in predictions_vector:
             self.assertTrue(-1 <= prediction <= 1)
-
-if __name__ == '__main__':
-    unittest.main()

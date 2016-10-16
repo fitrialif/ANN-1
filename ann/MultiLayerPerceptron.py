@@ -22,19 +22,17 @@ def _add_hidden_layers(seed, input_layer, network_specification):
 
 
 def _add_linear_regression_layer(seed, hidden_layers, network_specification):
-    output_layer = LinearRegressionLayer(seed=seed,
+    return LinearRegressionLayer(seed=seed,
                                          input_stream=hidden_layers[-1].output_stream,
                                          n_in=network_specification[-2],
                                          n_out=network_specification[-1])
-    return output_layer
 
 
 def _add_logistic_regression_layer(seed, hidden_layers, network_specification):
-    output_layer = LogisticRegressionLayer(seed=seed,
+    return LogisticRegressionLayer(seed=seed,
                                            input_stream=hidden_layers[-1].output_stream,
                                            n_in=network_specification[-2],
                                            n_out=network_specification[-1])
-    return output_layer
 
 
 def _verify_network_specification(network_specification):
@@ -42,12 +40,14 @@ def _verify_network_specification(network_specification):
         raise InvalidNetworkError
 
 
-def _verify_dimensions(dataset, network_specification):
+def _verify_dataset(dataset):
     if len(dataset) < 1:
         raise NoDatasetFoundError
     if len(dataset[0]) != 2:
         raise InvalidDataError
 
+
+def _verify_dimensions_regressor(dataset, network_specification):
     input_size = len(dataset[0][0])
     if input_size != network_specification[0]:
         raise InvalidDimensionError
@@ -55,17 +55,16 @@ def _verify_dimensions(dataset, network_specification):
     output_size = len(dataset[0][1])
     if output_size != network_specification[-1]:
         raise InvalidDimensionError
-    pass
 
 
-def _verify_dimensions2(dataset, network_specification):
-    if len(dataset) < 1:
-        raise NoDatasetFoundError
-    if len(dataset[0]) != 2:
-        raise InvalidDataError
-
+def _verify_dimensions_classifier(dataset, network_specification):
     input_size = len(dataset[0][0])
     if input_size != network_specification[0]:
+        raise InvalidDimensionError
+
+    predictions = dataset.T[1].tolist()
+    classes = np.unique(predictions).size
+    if classes != network_specification[-1]:
         raise InvalidDimensionError
 
 
@@ -93,11 +92,13 @@ def _collection_params(hidden_layers, output_layer):
     return params
 
 
+# TODO: reduce duplicate code with classifier
 class MultiLayerPerceptronRegressor(object):
     def __init__(self, seed, dataset, network_specification):
         # Assert inputs
         _verify_network_specification(network_specification)
-        _verify_dimensions(dataset, network_specification)
+        _verify_dataset(dataset)
+        _verify_dimensions_regressor(dataset, network_specification)
 
         # Prepare data
         self._data_x, self._data_y, self._data_points = _prepare_data(dataset)
@@ -115,7 +116,7 @@ class MultiLayerPerceptronRegressor(object):
                                         )
 
     def train(self, iterations=10, learning_rate=0.1, batch_size=1):
-        cost_function = self._output_layer.cost(self._output_vector)  # TODO: should this really be output vector
+        cost_function = self._output_layer.cost(self._output_vector)
         gradients = [tensor.grad(cost_function, param) for param in self._params]
         updates = [(param, param - learning_rate * gparam) for param, gparam in zip(self._params, gradients)]
 
@@ -136,11 +137,13 @@ class MultiLayerPerceptronRegressor(object):
         return self._predict(input_vector)
 
 
+# TODO: reduce duplicate code with regressor
 class MultiLayerPerceptronClassifier(object):
     def __init__(self, seed, dataset, network_specification):
         # Assert inputs
         _verify_network_specification(network_specification)
-        _verify_dimensions2(dataset, network_specification)
+        _verify_dataset(dataset)
+        _verify_dimensions_classifier(dataset, network_specification)
 
         # Prepare data
         self._data_x, self._data_y, self._data_points = _prepare_data(dataset)
@@ -186,7 +189,7 @@ class InvalidNetworkError(Exception):
 
 class InvalidDataError(Exception):
     def __init__(self):
-        Exception.__init__(self, 'Data set should be formatted as follow: [[[input],[output]],[[input],[output]]]')
+        Exception.__init__(self, 'Data set should be formatted as follows: [[[input],[output]],[[input],[output]]]')
 
 
 class NoNumpyArrayError(Exception):

@@ -36,17 +36,6 @@ class MultiLayerPerceptronTest(unittest.TestCase):
                           dataset=dataset,
                           network_specification=[1, 2, 3])
 
-    def test_invalid_input_size(self):
-        # Given
-        dataset = [[[1, 1], [2]]]
-        network_specification = [3, 2, 1]
-
-        # Then
-        self.assertRaises(InvalidDimensionError, MultiLayerPerceptronRegressor,
-                          seed=1234,
-                          dataset=dataset,
-                          network_specification=network_specification)
-
     def test_no_numpy_array(self):
         # Given
         dataset = [[[1, 2, 3, 4], [1, 2]]]
@@ -56,6 +45,41 @@ class MultiLayerPerceptronTest(unittest.TestCase):
                           seed=1234,
                           dataset=dataset,
                           network_specification=[4, 3, 2])
+
+    def test_invalid_input_size(self):
+        # Given
+        dataset = np.array([[[1, 1], [2]]])
+        network_specification = [3, 2, 1]
+
+        # Then
+        self.assertRaises(InvalidDimensionError, MultiLayerPerceptronRegressor,
+                          seed=1234,
+                          dataset=dataset,
+                          network_specification=network_specification)
+
+    def test_invalid_output_size_regressor(self):
+        # Given
+        dataset = np.array([[[1, 1], [2]]])
+        network_specification = [2, 2, 2]
+
+        # Then
+        self.assertRaises(InvalidDimensionError, MultiLayerPerceptronRegressor,
+                          seed=1234,
+                          dataset=dataset,
+                          network_specification=network_specification)
+
+    def test_invalid_output_size_classifier(self):
+        # Given
+        dataset = np.array([[[1, 1], [2]]])
+        network_specification = [2, 2, 2]
+
+        # Then
+        self.assertRaises(InvalidDimensionError, MultiLayerPerceptronClassifier,
+                          seed=1234,
+                          dataset=dataset,
+                          network_specification=network_specification)
+
+
 
     def test_network_initialization(self):
         # Given
@@ -98,7 +122,7 @@ class MultiLayerPerceptronTest(unittest.TestCase):
 
     def test_XOR_problem_classification(self):
         # Given
-        network_specification = [2, 2, 2]
+        network_specification = [2, 4, 2]
         dataset = np.asarray([[[0.0, 0.0], 0],
                               [[0.0, 1.0], 1],
                               [[1.0, 0.0], 1],

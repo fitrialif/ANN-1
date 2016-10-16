@@ -2,7 +2,7 @@ import numpy as np
 import theano
 from theano import tensor as tensor
 
-from ann.Layers import HiddenLayer, LinearRegressionLayer
+from ann.Layers import HiddenLayer, LinearRegressionLayer, LogisticRegressionLayer
 
 
 def _add_hidden_layers(seed, input_layer, network_specification):
@@ -26,6 +26,14 @@ def _add_linear_regression_layer(seed, hidden_layers, network_specification):
                                          input_stream=hidden_layers[-1].output_stream,
                                          n_in=network_specification[-2],
                                          n_out=network_specification[-1])
+    return output_layer
+
+
+def _add_logistic_regression_layer(seed, hidden_layers, network_specification):
+    output_layer = LogisticRegressionLayer(seed=seed,
+                                           input_stream=hidden_layers[-1].output_stream,
+                                           n_in=network_specification[-2],
+                                           n_out=network_specification[-1])
     return output_layer
 
 
@@ -117,6 +125,49 @@ class MultiLayerPerceptronRegressor(object):
                                       updates=updates,
                                       givens={
                                           self._input_layer: self._data_x[index * batch_size:(index + 1) * batch_size],
+                                          self._output_vector: self._data_y[index * batch_size:(index + 1) * batch_size]
+                                      })
+
+        for i in range(iterations):
+            for batch in range(self._data_points / batch_size):
+                train_model(batch)
+
+    def predict(self, input_vector):
+        return self._predict(input_vector)
+
+
+class MultiLayerPerceptronClassifier(object):
+    def __init__(self, seed, dataset, network_specification):
+        # Assert inputs
+        _verify_network_specification(network_specification)
+        _verify_dimensions2(dataset, network_specification)
+
+        # Prepare data
+        self._data_x, self._data_y, self._data_points = _prepare_data(dataset)
+
+        # Build network
+        self._input_vector = tensor.matrix('x')
+        self._hidden_layers = _add_hidden_layers(seed, self._input_vector, network_specification)
+        self._output_layer = _add_logistic_regression_layer(seed, self._hidden_layers, network_specification)
+        self._output_vector = tensor.lvector('y')
+        self._params = _collection_params(self._hidden_layers, self._output_layer)
+
+        # Prediction function
+        self._predict = theano.function(inputs=[self._input_vector],
+                                        outputs=self._output_layer.predict()
+                                        )
+
+    def train(self, iterations=10, learning_rate=0.1, batch_size=1):
+        cost_function = self._output_layer.cost(self._output_vector)
+        gradients = [tensor.grad(cost_function, param) for param in self._params]
+        updates = [(param, param - learning_rate * gparam) for param, gparam in zip(self._params, gradients)]
+
+        index = tensor.lscalar()
+        train_model = theano.function(inputs=[index],
+                                      outputs=cost_function,
+                                      updates=updates,
+                                      givens={
+                                          self._input_vector: self._data_x[index * batch_size:(index + 1) * batch_size],
                                           self._output_vector: self._data_y[index * batch_size:(index + 1) * batch_size]
                                       })
 

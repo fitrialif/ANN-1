@@ -63,7 +63,6 @@ class LogisticRegressionLayer(object):
         self.bias = _init_bias(n_out)
         self.params = [self.weights, self.bias]
 
-
         self.p_y_given_x = tensor.nnet.softmax(tensor.dot(input_stream, self.weights) + self.bias)
         self.y_prediction = tensor.argmax(self.p_y_given_x, axis=1)
 

@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 
 from ann.MultiLayerPerceptron import MultiLayerPerceptronRegressor, InvalidNetworkError, InvalidDataError, \
-    InvalidDimensionError, NoDatasetFoundError, NoNumpyArrayError
+    InvalidDimensionError, NoDatasetFoundError, NoNumpyArrayError, MultiLayerPerceptronClassifier
 
 
 class MultiLayerPerceptronTest(unittest.TestCase):
@@ -95,3 +95,25 @@ class MultiLayerPerceptronTest(unittest.TestCase):
         self.assertTrue(multilayer_perceptron_regressor.predict([[0, 1]])[0] > 0.9999)
         self.assertTrue(multilayer_perceptron_regressor.predict([[1, 0]])[0] > 0.9999)
         self.assertTrue(multilayer_perceptron_regressor.predict([[1, 1]])[0] < 0.0001)
+
+    def test_XOR_problem_classification(self):
+        # Given
+        network_specification = [2, 2, 2]
+        dataset = np.asarray([[[0.0, 0.0], 0],
+                              [[0.0, 1.0], 1],
+                              [[1.0, 0.0], 1],
+                              [[1.0, 1.0], 0]
+                              ])
+
+        multilayer_perceptron_classifier = MultiLayerPerceptronClassifier(seed=1234,
+                                                                          dataset=dataset,
+                                                                          network_specification=network_specification)
+
+        # When
+        multilayer_perceptron_classifier.train(iterations=100, learning_rate=0.1)
+
+        # Then
+        self.assertEqual(0, multilayer_perceptron_classifier.predict([[0.0, 0.0]]))
+        self.assertEqual(1, multilayer_perceptron_classifier.predict([[0.0, 1.0]]))
+        self.assertEqual(1, multilayer_perceptron_classifier.predict([[1.0, 0.0]]))
+        self.assertEqual(0, multilayer_perceptron_classifier.predict([[0.0, 0.0]]))

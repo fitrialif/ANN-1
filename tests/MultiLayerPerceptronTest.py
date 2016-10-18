@@ -79,8 +79,6 @@ class MultiLayerPerceptronTest(unittest.TestCase):
                           dataset=dataset,
                           network_specification=network_specification)
 
-
-
     def test_network_initialization(self):
         # Given
         network_specification = [4, 3, 2]
@@ -101,10 +99,10 @@ class MultiLayerPerceptronTest(unittest.TestCase):
     def test_XOR_problem_regression(self):
         # Given
         network_specification = [2, 2, 1]
-        dataset = np.asarray([[[1.0, 1.0], [0.0]],
-                              [[0.0, 0.0], [0.0]],
+        dataset = np.asarray([[[0.0, 0.0], [0.0]],
+                              [[0.0, 1.0], [1.0]],
                               [[1.0, 0.0], [1.0]],
-                              [[0.0, 1.0], [1.0]]
+                              [[1.0, 1.0], [0.0]]
                               ])
 
         multilayer_perceptron_regressor = MultiLayerPerceptronRegressor(seed=1234,
@@ -119,6 +117,8 @@ class MultiLayerPerceptronTest(unittest.TestCase):
         self.assertTrue(multilayer_perceptron_regressor.predict([[0, 1]])[0] > 0.9999)
         self.assertTrue(multilayer_perceptron_regressor.predict([[1, 0]])[0] > 0.9999)
         self.assertTrue(multilayer_perceptron_regressor.predict([[1, 1]])[0] < 0.0001)
+
+        self.assertTrue(multilayer_perceptron_regressor.test(dataset) < 0.0001)
 
     def test_XOR_problem_classification(self):
         # Given
@@ -137,7 +137,9 @@ class MultiLayerPerceptronTest(unittest.TestCase):
         multilayer_perceptron_classifier.train(iterations=100, learning_rate=0.1)
 
         # Then
-        #self.assertEqual(0, multilayer_perceptron_classifier.predict([[0.0, 0.0]]))
-        #self.assertEqual(1, multilayer_perceptron_classifier.predict([[0.0, 1.0]]))
-        #self.assertEqual(1, multilayer_perceptron_classifier.predict([[1.0, 0.0]]))
-        #self.assertEqual(0, multilayer_perceptron_classifier.predict([[0.0, 0.0]]))
+        self.assertEqual(0, multilayer_perceptron_classifier.predict([[0.0, 0.0]]))
+        self.assertEqual(1, multilayer_perceptron_classifier.predict([[0.0, 1.0]]))
+        self.assertEqual(1, multilayer_perceptron_classifier.predict([[1.0, 0.0]]))
+        self.assertEqual(0, multilayer_perceptron_classifier.predict([[0.0, 0.0]]))
+
+        self.assertTrue(multilayer_perceptron_classifier.test(dataset) == 0)

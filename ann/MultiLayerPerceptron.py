@@ -34,7 +34,6 @@ def _verify_dataset(dataset):
         raise InvalidDataError
 
 
-
 def _collection_params(hidden_layers, output_layer):
     params = []
     for layer in hidden_layers:
@@ -67,6 +66,7 @@ class MultiLayerPerceptron(object):
         _verify_network_specification(network_specification)
         _verify_dataset(dataset)
         self.verify_dimensions(dataset, network_specification)
+        self.network_specification = network_specification
 
         # Prepare data
         self._data_x, self._data_y, self._data_points = _prepare_data(dataset)
@@ -78,7 +78,7 @@ class MultiLayerPerceptron(object):
         self._output_vector = self.add_output_vector()
         self._params = _collection_params(self._hidden_layers, self._output_layer)
 
-        # Prediction function
+        # Functions
         self._predict = self.prediction_function(self._input_vector, self._output_layer)
 
     def train(self, iterations=10, learning_rate=0.1, batch_size=1):
@@ -95,8 +95,27 @@ class MultiLayerPerceptron(object):
                                       })
 
         for i in range(iterations):
+            print "iteration " + str(i + 1) + "/" + str(iterations)
             for batch in range(self._data_points / batch_size):
                 train_model(batch)
+
+    def test(self, testdata, batch_size=1):
+        _verify_network_specification(self.network_specification)
+        _verify_dataset(testdata)
+        self.verify_dimensions(testdata, self.network_specification)
+
+        data_x, data_y, zz = _prepare_data(testdata)
+
+        index = tensor.lscalar()
+        test_model = theano.function(inputs=[index],
+                                     outputs=self._output_layer.error(self._output_vector),
+                                     givens={
+                                         self._input_vector: data_x[index * batch_size:(index + 1) * batch_size],
+                                         self._output_vector: data_y[index * batch_size:(index + 1) * batch_size]
+                                     })
+
+        test_loss = [test_model(i) for i in range(len(testdata))]
+        return np.mean(test_loss) * 100
 
     def predict(self, input_vector):
         return self._predict(input_vector)

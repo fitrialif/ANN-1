@@ -61,15 +61,15 @@ def _prepare_data(dataset):
 class MultiLayerPerceptron(object):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, seed, dataset, network_specification):
+    def __init__(self, seed, training_set, network_specification):
         # Assert inputs
         _verify_network_specification(network_specification)
-        _verify_dataset(dataset)
-        self.verify_dimensions(dataset, network_specification)
+        _verify_dataset(training_set)
+        self.verify_dimensions(training_set, network_specification)
         self.network_specification = network_specification
 
         # Prepare data
-        self._data_x, self._data_y, self._data_points = _prepare_data(dataset)
+        self._data_x, self._data_y, self._data_points = _prepare_data(training_set)
 
         # Build network
         self._input_vector = tensor.matrix('x')
@@ -99,12 +99,12 @@ class MultiLayerPerceptron(object):
             for batch in range(self._data_points / batch_size):
                 train_model(batch)
 
-    def test(self, testdata, batch_size=1):
+    def test(self, test_set, batch_size=1):
         _verify_network_specification(self.network_specification)
-        _verify_dataset(testdata)
-        self.verify_dimensions(testdata, self.network_specification)
+        _verify_dataset(test_set)
+        self.verify_dimensions(test_set, self.network_specification)
 
-        data_x, data_y, zz = _prepare_data(testdata)
+        data_x, data_y, zz = _prepare_data(test_set)
 
         index = tensor.lscalar()
         test_model = theano.function(inputs=[index],
@@ -114,7 +114,7 @@ class MultiLayerPerceptron(object):
                                          self._output_vector: data_y[index * batch_size:(index + 1) * batch_size]
                                      })
 
-        test_loss = [test_model(i) for i in range(len(testdata))]
+        test_loss = [test_model(i) for i in range(len(test_set))]
         return np.mean(test_loss) * 100
 
     def predict(self, input_vector):
@@ -138,8 +138,8 @@ class MultiLayerPerceptron(object):
 
 
 class MultiLayerPerceptronRegressor(MultiLayerPerceptron):
-    def __init__(self, seed, dataset, network_specification):
-        MultiLayerPerceptron.__init__(self, seed, dataset, network_specification)
+    def __init__(self, seed, training_set, network_specification):
+        MultiLayerPerceptron.__init__(self, seed, training_set, network_specification)
 
     def verify_dimensions(self, dataset, network_specification):
         input_size = len(dataset[0][0])
@@ -166,8 +166,8 @@ class MultiLayerPerceptronRegressor(MultiLayerPerceptron):
 
 
 class MultiLayerPerceptronClassifier(MultiLayerPerceptron):
-    def __init__(self, seed, dataset, network_specification):
-        MultiLayerPerceptron.__init__(self, seed, dataset, network_specification)
+    def __init__(self, seed, training_set, network_specification):
+        MultiLayerPerceptron.__init__(self, seed, training_set, network_specification)
 
     def verify_dimensions(self, dataset, network_specification):
         input_size = len(dataset[0][0])

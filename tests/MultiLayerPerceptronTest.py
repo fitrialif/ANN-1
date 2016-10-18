@@ -13,70 +13,70 @@ class MultiLayerPerceptronTest(unittest.TestCase):
         # Then
         self.assertRaises(InvalidNetworkError, MultiLayerPerceptronRegressor,
                           seed=1234,
-                          dataset=[[[1, 1], [2]]],
+                          training_set=[[[1, 1], [2]]],
                           network_specification=network_specification)
 
     def test_invalid_data_set_format(self):
         # Given
-        dataset = [[[1]]]
+        training_set = [[[1]]]
 
         # Then
         self.assertRaises(InvalidDataError, MultiLayerPerceptronRegressor,
                           seed=1234,
-                          dataset=dataset,
+                          training_set=training_set,
                           network_specification=[1, 2, 1])
 
     def test_missing_data_set(self):
         # Given
-        dataset = []
+        training_set = []
 
         # Then
         self.assertRaises(NoDatasetFoundError, MultiLayerPerceptronRegressor,
                           seed=1234,
-                          dataset=dataset,
+                          training_set=training_set,
                           network_specification=[1, 2, 3])
 
     def test_no_numpy_array(self):
         # Given
-        dataset = [[[1, 2, 3, 4], [1, 2]]]
+        training_set = [[[1, 2, 3, 4], [1, 2]]]
 
         # Then
         self.assertRaises(NoNumpyArrayError, MultiLayerPerceptronRegressor,
                           seed=1234,
-                          dataset=dataset,
+                          training_set=training_set,
                           network_specification=[4, 3, 2])
 
     def test_invalid_input_size(self):
         # Given
-        dataset = np.array([[[1, 1], [2]]])
+        training_set = np.array([[[1, 1], [2]]])
         network_specification = [3, 2, 1]
 
         # Then
         self.assertRaises(InvalidDimensionError, MultiLayerPerceptronRegressor,
                           seed=1234,
-                          dataset=dataset,
+                          training_set=training_set,
                           network_specification=network_specification)
 
     def test_invalid_output_size_regressor(self):
         # Given
-        dataset = np.array([[[1, 1], [2]]])
+        training_set = np.array([[[1, 1], [2]]])
         network_specification = [2, 2, 2]
 
         # Then
         self.assertRaises(InvalidDimensionError, MultiLayerPerceptronRegressor,
                           seed=1234,
-                          dataset=dataset,
+                          training_set=training_set,
                           network_specification=network_specification)
 
     def test_invalid_output_size_classifier(self):
         # Given
-        dataset = np.array([[[1, 1], [2]]])
+        training_set = np.array([[[1, 1], [2]]])
         network_specification = [2, 2, 2]
 
         # Then
         self.assertRaises(InvalidDimensionError, MultiLayerPerceptronClassifier,
                           seed=1234,
-                          dataset=dataset,
+                          training_set=training_set,
                           network_specification=network_specification)
 
     def test_network_initialization(self):
@@ -85,7 +85,7 @@ class MultiLayerPerceptronTest(unittest.TestCase):
 
         # When
         multilayer_perceptron_regressor = MultiLayerPerceptronRegressor(seed=1234,
-                                                                        dataset=np.array([[[1, 2, 3, 4], [1, 2]]]),
+                                                                        training_set=np.array([[[1, 2, 3, 4], [1, 2]]]),
                                                                         network_specification=network_specification)
 
         # Then
@@ -99,14 +99,14 @@ class MultiLayerPerceptronTest(unittest.TestCase):
     def test_XOR_problem_regression(self):
         # Given
         network_specification = [2, 2, 1]
-        dataset = np.asarray([[[0.0, 0.0], [0.0]],
+        training_set = np.asarray([[[0.0, 0.0], [0.0]],
                               [[0.0, 1.0], [1.0]],
                               [[1.0, 0.0], [1.0]],
                               [[1.0, 1.0], [0.0]]
                               ])
 
         multilayer_perceptron_regressor = MultiLayerPerceptronRegressor(seed=1234,
-                                                                        dataset=dataset,
+                                                                        training_set=training_set,
                                                                         network_specification=network_specification)
 
         # When
@@ -118,19 +118,19 @@ class MultiLayerPerceptronTest(unittest.TestCase):
         self.assertTrue(multilayer_perceptron_regressor.predict([[1, 0]])[0] > 0.9999)
         self.assertTrue(multilayer_perceptron_regressor.predict([[1, 1]])[0] < 0.0001)
 
-        self.assertTrue(multilayer_perceptron_regressor.test(dataset) < 0.0001)
+        self.assertTrue(multilayer_perceptron_regressor.test(training_set) < 0.0001)
 
     def test_XOR_problem_classification(self):
         # Given
         network_specification = [2, 4, 2]
-        dataset = np.asarray([[[0.0, 0.0], 0],
+        training_set = np.asarray([[[0.0, 0.0], 0],
                               [[0.0, 1.0], 1],
                               [[1.0, 0.0], 1],
                               [[1.0, 1.0], 0]
                               ])
 
         multilayer_perceptron_classifier = MultiLayerPerceptronClassifier(seed=1234,
-                                                                          dataset=dataset,
+                                                                          training_set=training_set,
                                                                           network_specification=network_specification)
 
         # When
@@ -142,4 +142,4 @@ class MultiLayerPerceptronTest(unittest.TestCase):
         self.assertEqual(1, multilayer_perceptron_classifier.predict([[1.0, 0.0]]))
         self.assertEqual(0, multilayer_perceptron_classifier.predict([[0.0, 0.0]]))
 
-        self.assertTrue(multilayer_perceptron_classifier.test(dataset) == 0)
+        self.assertTrue(multilayer_perceptron_classifier.test(training_set) == 0)

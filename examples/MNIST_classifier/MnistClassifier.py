@@ -28,7 +28,7 @@ def test_mlp(learning_rate=0.01, iterations=100, dataset='mnist.pkl.gz', batch_s
     # Create network
     network_specification = [784, 392, 196, 98, 49, 10]
     multilayer_perceptron_classifier = MultiLayerPerceptronClassifier(seed=1234,
-                                                                      dataset=training_data,
+                                                                      training_set=training_data,
                                                                       # TODO: add validation data
                                                                       network_specification=network_specification)
 

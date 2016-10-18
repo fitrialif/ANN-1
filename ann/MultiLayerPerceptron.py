@@ -58,28 +58,33 @@ def _prepare_data(dataset):
         raise NoNumpyArrayError
 
 
+def _verify_and_prepare_data(data_set, network_specification, verify_dimensions):
+    _verify_dataset(data_set)
+    verify_dimensions(data_set, network_specification)
+    return _prepare_data(data_set)
+
+
 class MultiLayerPerceptron(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, seed, network_specification):
-        # Assert inputs
+        # Assert network specification
         _verify_network_specification(network_specification)
-        self.network_specification = network_specification
 
         # Build network
+        self.network_specification = network_specification
         self._input_vector = tensor.matrix('x')
         self._hidden_layers = _add_hidden_layers(seed, self._input_vector, network_specification)
         self._output_layer = self.add_output_layer(seed, self._hidden_layers, network_specification)
         self._output_vector = self.add_output_vector()
         self._params = _collection_params(self._hidden_layers, self._output_layer)
 
-        # Functions
+        # Set predict function
         self._predict = self.prediction_function(self._input_vector, self._output_layer)
 
     def train(self, training_set, iterations=10, learning_rate=0.1, batch_size=1):
-        _verify_dataset(training_set)
-        self.verify_dimensions(training_set, self.network_specification)
-        self._data_x, self._data_y, self._data_points = _prepare_data(training_set)
+        data_x, data_y, data_points = _verify_and_prepare_data(training_set, self.network_specification,
+                                                               self.verify_dimensions)
 
         cost_function = self._output_layer.cost(self._output_vector)
         gradients = [tensor.grad(cost_function, param) for param in self._params]
@@ -89,21 +94,17 @@ class MultiLayerPerceptron(object):
                                       outputs=cost_function,
                                       updates=updates,
                                       givens={
-                                          self._input_vector: self._data_x[index * batch_size:(index + 1) * batch_size],
-                                          self._output_vector: self._data_y[index * batch_size:(index + 1) * batch_size]
+                                          self._input_vector: data_x[index * batch_size:(index + 1) * batch_size],
+                                          self._output_vector: data_y[index * batch_size:(index + 1) * batch_size]
                                       })
 
         for i in range(iterations):
             print "iteration " + str(i + 1) + "/" + str(iterations)
-            for batch in range(self._data_points / batch_size):
+            for batch in range(data_points / batch_size):
                 train_model(batch)
 
     def test(self, test_set, batch_size=1):
-        _verify_network_specification(self.network_specification)
-        _verify_dataset(test_set)
-        self.verify_dimensions(test_set, self.network_specification)
-
-        data_x, data_y, zz = _prepare_data(test_set)
+        data_x, data_y, _ = _verify_and_prepare_data(test_set, self.network_specification, self.verify_dimensions)
 
         index = tensor.lscalar()
         test_model = theano.function(inputs=[index],

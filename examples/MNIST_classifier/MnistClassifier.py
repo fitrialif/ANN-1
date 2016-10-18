@@ -21,19 +21,18 @@ def load_data(dataset):
     return training_data, validation_data, test_data
 
 
-def test_mlp(learning_rate=0.01, iterations=100, dataset='mnist.pkl.gz', batch_size=20):
+def test_mlp(learning_rate=0.01, iterations=1, dataset='mnist.pkl.gz', batch_size=20):
     # Prepare data
     training_data, validation_data, test_data = load_data(dataset)
 
     # Create network
     network_specification = [784, 392, 196, 98, 49, 10]
     multilayer_perceptron_classifier = MultiLayerPerceptronClassifier(seed=1234,
-                                                                      training_set=training_data,
                                                                       # TODO: add validation data
                                                                       network_specification=network_specification)
 
     # Train
-    multilayer_perceptron_classifier.train(iterations=iterations, learning_rate=learning_rate, batch_size=batch_size)
+    multilayer_perceptron_classifier.train(training_data, iterations=iterations, learning_rate=learning_rate, batch_size=batch_size)
 
     # Test
     print "Error rate of " + str(multilayer_perceptron_classifier.test(test_data)) + "%"

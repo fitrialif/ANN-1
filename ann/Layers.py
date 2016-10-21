@@ -73,5 +73,4 @@ class LogisticRegressionLayer(object):
         return tensor.mean(tensor.neq(self.y_prediction, y))
 
     def cost(self, y):
-        theano.pp(self.p_y_given_x)
         return -tensor.mean(tensor.log(self.p_y_given_x)[tensor.arange(y.shape[0]), y])  # TODO: add l1 and l2 reg

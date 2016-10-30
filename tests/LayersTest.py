@@ -1,84 +1,97 @@
 import unittest
-from ann.Layers import HiddenLayer, LinearRegressionLayer, LogisticRegressionLayer
+from ann.Layers import HiddenLayer, LinearRegressionLayer, LogisticRegressionLayer, InputLayer, LeNetConvPoolLayer
 
 
 class HiddenLayerTest(unittest.TestCase):
     def test_initialization(self):
-        # Given
-        input_vector = [[0]]
-        n_in = 2  # a total of 6 in and out will result into weights between -1 and 1 according to xavier method
-        n_out = 4
+        # Given, a total of 6 in and out will result into weights between -1 and 1 according to xavier method
+        input_layer = InputLayer([3])
+        hidden_layer = HiddenLayer(3)
 
         # When
-        hidden_layer = HiddenLayer(seed=1234, input_stream=input_vector, n_in=n_in, n_out=n_out)
+        hidden_layer.connect(seed=1234, input_layer=input_layer)
 
         # Then
-        weights = hidden_layer.weights.eval()
+        params = hidden_layer.params
+        weights = params[0].eval()
         for column in weights:
             for value in column:
                 self.assertTrue(-1 <= value <= 1)
 
-        bias = hidden_layer.bias.eval()
+        bias = params[1].eval()
         for b in bias:
             self.assertEqual(b, 0)
 
 
-class LinearRegressionTest(unittest.TestCase):
-    def test_error(self):
-        # Given
-        input_vector = [[0]]
-        n_in = 1
-        n_out = 1
+class LinearRegressionLayerTest(unittest.TestCase):
+    def test_initialization(self):
+        # Given, a total of 6 in and out will result into weights between -1 and 1 according to xavier method
+        input_layer = InputLayer([3])
+        hidden_layer = HiddenLayer(3)
+        hidden_layer.connect(seed=1234, input_layer=input_layer)
+        linear_regression_layer = LinearRegressionLayer(3)
 
         # When
-        linear_regression_layer = LinearRegressionLayer(seed=1234, input_stream=input_vector, n_in=n_in, n_out=n_out)
+        linear_regression_layer.connect(seed=1234, input_layer=hidden_layer)
 
         # Then
-        error = 2
-        sq_error = error * error
-        self.assertEqual(sq_error, linear_regression_layer.error([error]).eval())
+        params = hidden_layer.params
+        weights = params[0].eval()
+        for column in weights:
+            for value in column:
+                self.assertTrue(-1 <= value <= 1)
 
-    def test_prediction(self):
-        # Given
-        input_vector = [[1]]
-        n_in = 1  # a total of 6 in and out will result into weights between -1 and 1 according to xavier method
-        n_out = 5
-
-        # When
-        linear_regression_layer = LinearRegressionLayer(seed=1234, input_stream=input_vector, n_in=n_in, n_out=n_out)
-
-        # Then
-        predictions_vector = linear_regression_layer.predict().eval()[0]
-        for prediction in predictions_vector:
-            self.assertTrue(-1 <= prediction <= 1)
+        bias = params[1].eval()
+        for b in bias:
+            self.assertEqual(b, 0)
 
 
 class LogisticRegressionTest(unittest.TestCase):
-    def test_error_same_class(self):
-        # Given
-        classification = 0
-        input_vector = [[classification]]
-
-        logistic_regression_layer = LogisticRegressionLayer(seed=1234, input_stream=input_vector, n_in=1, n_out=1)
-
-        # When
-        error = logistic_regression_layer.error([classification]).eval()
-
-        # Then
-        difference = 0
-        self.assertEqual(error, difference)
-
-    def test_error_different_class(self):
-        # Given
-        class1 = 0
-        class2 = 1
-        input_vector = [[class1]]
-
-        logistic_regression_layer = LogisticRegressionLayer(seed=1234, input_stream=input_vector, n_in=1, n_out=1)
+    def test_initialization(self):
+        # Given, a total of 6 in and out will result into weights between -1 and 1 according to xavier method
+        input_layer = InputLayer([3])
+        hidden_layer = HiddenLayer(3)
+        hidden_layer.connect(seed=1234, input_layer=input_layer)
+        linear_regression_layer = LogisticRegressionLayer(3)
 
         # When
-        error = logistic_regression_layer.error([class2]).eval()
+        linear_regression_layer.connect(seed=1234, input_layer=hidden_layer)
 
         # Then
-        difference = 1
-        self.assertEqual(error, difference)
+        params = hidden_layer.params
+        weights = params[0].eval()
+        for column in weights:
+            for value in column:
+                self.assertTrue(-1 <= value <= 1)
+
+        bias = params[1].eval()
+        for b in bias:
+            self.assertEqual(b, 0)
+
+
+class LeNetConvPoolLayerTest(unittest.TestCase):
+    def test_initialization(self):
+        # Given
+        input_layer = InputLayer([4, 4])
+
+        conv_layer = LeNetConvPoolLayer(feature_map=1, filter=(2, 2), pool=(1, 2))
+        conv_layer.connect(seed=1234, input_layer=input_layer)
+
+        hidden_layer = HiddenLayer(1)
+        hidden_layer.connect(seed=1234, input_layer=conv_layer)
+
+        # Then
+        params = conv_layer.params
+        weights_matrix = params[0].eval()
+        for dim in weights_matrix:
+            for feature_map in dim:
+                for column in feature_map:
+                    for value in column:
+                        self.assertTrue(-1 <= value <= 1)
+
+        bias = params[1].eval()
+        for b in bias:
+            self.assertEqual(b, 0)
+
+        self.assertEqual((3, 1), conv_layer.output_shape)
+        self.assertEqual(3, conv_layer.size)

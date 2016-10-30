@@ -3,22 +3,16 @@ import theano
 import abc
 from theano import tensor as tensor
 
-from ann.Layers import HiddenLayer, LinearRegressionLayer, LogisticRegressionLayer
 
-
-def _add_hidden_layers(seed, input_layer, network_specification):
+def _add_hidden_layers(seed, network_specification):
     hidden_layers = []
-    input_stream = input_layer
     for index, layer in enumerate(network_specification):
         if 0 == index or index == len(network_specification) - 1:
             continue
 
-        hidden_layer = HiddenLayer(seed=seed,
-                                   input_stream=input_stream,
-                                   n_in=network_specification[index - 1],
-                                   n_out=network_specification[index])
-        hidden_layers.append(hidden_layer)
-        input_stream = hidden_layer.output_stream
+        network_specification[index].connect(seed=seed, input_layer=network_specification[index - 1])
+
+        hidden_layers.append(network_specification[index])
     return hidden_layers
 
 
@@ -73,13 +67,13 @@ class MultiLayerPerceptron(object):
 
         # Build network
         self.network_specification = network_specification
-        self._input_vector = tensor.matrix('x')
-        self._hidden_layers = _add_hidden_layers(seed, self._input_vector, network_specification)
-        self._output_layer = self._add_output_layer(seed, self._hidden_layers, network_specification)
+        self._input_vector = network_specification[0].output_stream
+        self._hidden_layers = _add_hidden_layers(seed, network_specification)
+        self._output_layer = self._add_output_layer(seed, self._hidden_layers)
         self._output_vector = self._add_output_vector()
         self._params = _collection_params(self._hidden_layers, self._output_layer)
 
-        # Set predict function
+        # Prediction function
         self._predict = self._prediction_function(self._input_vector, self._output_layer)
 
     def train(self, training_set, iterations=10, learning_rate=0.1, batch_size=1):
@@ -120,12 +114,14 @@ class MultiLayerPerceptron(object):
     def predict(self, input_vector):
         return self._predict(input_vector)
 
-    @abc.abstractmethod
-    def _verify_dimensions(self, data_set, network_specification):
-        pass
+    def _add_output_layer(self, seed, hidden_layers):
+        self.network_specification[-1].connect(seed=seed,
+                                               input_layer=hidden_layers[-1]
+                                               )
+        return self.network_specification[-1]
 
     @abc.abstractmethod
-    def _add_output_layer(self, seed, hidden_layers, network_specification):
+    def _verify_dimensions(self, data_set, network_specification):
         pass
 
     @abc.abstractmethod
@@ -143,18 +139,12 @@ class MultiLayerPerceptronRegressor(MultiLayerPerceptron):
 
     def _verify_dimensions(self, data_set, network_specification):
         input_size = len(data_set[0][0])
-        if input_size != network_specification[0]:
+        if input_size != network_specification[0].size:
             raise InvalidDimensionError
 
         output_size = len(data_set[0][1])
-        if output_size != network_specification[-1]:
+        if output_size != network_specification[-1].size:
             raise InvalidDimensionError
-
-    def _add_output_layer(self, seed, hidden_layers, network_specification):
-        return LinearRegressionLayer(seed=seed,
-                                     input_stream=hidden_layers[-1].output_stream,
-                                     n_in=network_specification[-2],
-                                     n_out=network_specification[-1])
 
     def _add_output_vector(self):
         return tensor.matrix('y')
@@ -171,18 +161,12 @@ class MultiLayerPerceptronClassifier(MultiLayerPerceptron):
 
     def _verify_dimensions(self, data_set, network_specification):
         input_size = len(data_set[0][0])
-        if input_size != network_specification[0]:
+        if input_size != network_specification[0].size:
             raise InvalidDimensionError
 
         number_of_classes = np.unique(data_set.T[1].tolist()).size
-        if number_of_classes != network_specification[-1]:
+        if number_of_classes != network_specification[-1].size:
             raise InvalidDimensionError
-
-    def _add_output_layer(self, seed, hidden_layers, network_specification):
-        return LogisticRegressionLayer(seed=seed,
-                                       input_stream=hidden_layers[-1].output_stream,
-                                       n_in=network_specification[-2],
-                                       n_out=network_specification[-1])
 
     def _add_output_vector(self):
         return tensor.lvector('y')

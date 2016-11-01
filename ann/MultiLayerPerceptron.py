@@ -1,6 +1,5 @@
 import numpy as np
 import theano
-import abc
 from theano import tensor as tensor
 
 
@@ -11,7 +10,6 @@ def _add_hidden_layers(seed, network_specification):
             continue
 
         network_specification[index].connect(seed=seed, input_layer=network_specification[index - 1])
-
         hidden_layers.append(network_specification[index])
     return hidden_layers
 
@@ -52,15 +50,14 @@ def _prepare_data(data_set):
         raise NoNumpyArrayError
 
 
-def _verify_and_prepare_data(data_set, network_specification, verify_dimensions):
+def _verify_and_prepare_data(data_set, network_specification):
     _verify_data_set(data_set)
-    verify_dimensions(data_set, network_specification)
+    network_specification[0].verify_dimensions(data_set)
+    network_specification[-1].verify_dimensions(data_set)
     return _prepare_data(data_set)
 
 
 class MultiLayerPerceptron(object):
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self, seed, network_specification):
         # Assert network specification
         _verify_network_specification(network_specification)
@@ -70,15 +67,16 @@ class MultiLayerPerceptron(object):
         self._input_vector = network_specification[0].output_stream
         self._hidden_layers = _add_hidden_layers(seed, network_specification)
         self._output_layer = self._add_output_layer(seed, self._hidden_layers)
-        self._output_vector = self._add_output_vector()
+        self._output_vector = network_specification[-1].output_vector
         self._params = _collection_params(self._hidden_layers, self._output_layer)
 
         # Prediction function
-        self._predict = self._prediction_function(self._input_vector, self._output_layer)
+        self._predict = theano.function(inputs=[self._input_vector],
+                                        outputs=self._output_layer.predict()
+                                        )
 
     def train(self, training_set, iterations=10, learning_rate=0.1, batch_size=1):
-        data_x, data_y, data_points = _verify_and_prepare_data(training_set, self.network_specification,
-                                                               self._verify_dimensions)
+        data_x, data_y, data_points = _verify_and_prepare_data(training_set, self.network_specification)
 
         cost_function = self._output_layer.cost(self._output_vector)
         gradients = [tensor.grad(cost_function, param) for param in self._params]
@@ -93,12 +91,13 @@ class MultiLayerPerceptron(object):
                                       })
 
         for i in range(iterations):
-            print "iteration " + str(i + 1) + "/" + str(iterations)
+            if i % 10 == 0:
+                print "iteration " + str(i + 1) + "/" + str(iterations)
             for batch in range(data_points / batch_size):
                 train_model(batch)
 
     def test(self, test_set, batch_size=1):
-        data_x, data_y, _ = _verify_and_prepare_data(test_set, self.network_specification, self._verify_dimensions)
+        data_x, data_y, _ = _verify_and_prepare_data(test_set, self.network_specification)
 
         index = tensor.lscalar()
         test_model = theano.function(inputs=[index],
@@ -120,62 +119,6 @@ class MultiLayerPerceptron(object):
                                                )
         return self.network_specification[-1]
 
-    @abc.abstractmethod
-    def _verify_dimensions(self, data_set, network_specification):
-        pass
-
-    @abc.abstractmethod
-    def _add_output_vector(self):
-        pass
-
-    @abc.abstractmethod
-    def _prediction_function(self, input_layer, output_layer):
-        pass
-
-
-class MultiLayerPerceptronRegressor(MultiLayerPerceptron):
-    def __init__(self, seed, network_specification):
-        MultiLayerPerceptron.__init__(self, seed, network_specification)
-
-    def _verify_dimensions(self, data_set, network_specification):
-        input_size = len(data_set[0][0])
-        if input_size != network_specification[0].size:
-            raise InvalidDimensionError
-
-        output_size = len(data_set[0][1])
-        if output_size != network_specification[-1].size:
-            raise InvalidDimensionError
-
-    def _add_output_vector(self):
-        return tensor.matrix('y')
-
-    def _prediction_function(self, input_layer, output_layer):
-        return theano.function(inputs=[input_layer],
-                               outputs=output_layer.predict()[0]
-                               )
-
-
-class MultiLayerPerceptronClassifier(MultiLayerPerceptron):
-    def __init__(self, seed, network_specification):
-        MultiLayerPerceptron.__init__(self, seed, network_specification)
-
-    def _verify_dimensions(self, data_set, network_specification):
-        input_size = len(data_set[0][0])
-        if input_size != network_specification[0].size:
-            raise InvalidDimensionError
-
-        number_of_classes = np.unique(data_set.T[1].tolist()).size
-        if number_of_classes != network_specification[-1].size:
-            raise InvalidDimensionError
-
-    def _add_output_vector(self):
-        return tensor.lvector('y')
-
-    def _prediction_function(self, input_layer, output_layer):
-        return theano.function(inputs=[input_layer],
-                               outputs=output_layer.predict()
-                               )
-
 
 class InvalidNetworkError(Exception):
     def __init__(self):
@@ -195,8 +138,3 @@ class NoNumpyArrayError(Exception):
 class NoDatasetFoundError(Exception):
     def __init__(self):
         Exception.__init__(self, 'No input data has been found')
-
-
-class InvalidDimensionError(Exception):
-    def __init__(self):
-        Exception.__init__(self, 'The input and output sizes of the data set do not match with the specified network')

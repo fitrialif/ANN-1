@@ -3,17 +3,20 @@ import gzip
 import numpy as np
 
 from ann.Layers import LeNetConvPoolLayer, InputLayer, HiddenLayer, LogisticRegressionLayer
-from ann.MultiLayerPerceptron import MultiLayerPerceptronClassifier
+from ann.MultiLayerPerceptron import MultiLayerPerceptron
+
+
+def format_data_set(data_set):
+    return np.asarray([data_set[0].tolist(), data_set[1].tolist()]).T
 
 
 def load_data(data_set):
     with gzip.open(data_set, 'rb') as f:
         train_set, _, test_set = pickle.load(f)
+    return format_data_set(train_set), format_data_set(test_set)
 
-    return np.asarray([train_set[0].tolist(), train_set[1].tolist()]).T, np.asarray([test_set[0].tolist(), test_set[1].tolist()]).T
 
-
-def test_mlp(learning_rate=0.1, data_set='mnist.pkl.gz', batch_size=500):
+def example_mlp(learning_rate=0.1, data_set='mnist.pkl.gz', batch_size=500):
     # Prepare data
     training_set, test_set = load_data(data_set)
 
@@ -23,7 +26,7 @@ def test_mlp(learning_rate=0.1, data_set='mnist.pkl.gz', batch_size=500):
                              LeNetConvPoolLayer(feature_map=50, filter=(5, 5), pool=(2, 2)),
                              HiddenLayer(500),
                              LogisticRegressionLayer(10)]
-    neural_network = MultiLayerPerceptronClassifier(seed=1234, network_specification=network_specification)
+    neural_network = MultiLayerPerceptron(seed=1234, network_specification=network_specification)
 
     # Train
     neural_network.train(training_set=training_set, learning_rate=learning_rate, batch_size=batch_size, iterations=1)
@@ -33,4 +36,4 @@ def test_mlp(learning_rate=0.1, data_set='mnist.pkl.gz', batch_size=500):
 
 
 if __name__ == '__main__':
-    test_mlp()
+    example_mlp()

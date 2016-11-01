@@ -1,9 +1,9 @@
 import unittest
 import numpy as np
 
-from ann.Layers import InputLayer, LogisticRegressionLayer, LinearRegressionLayer, HiddenLayer
-from ann.MultiLayerPerceptron import MultiLayerPerceptronRegressor, InvalidNetworkError, InvalidDataError, \
-    InvalidDimensionError, NoDatasetFoundError, NoNumpyArrayError, MultiLayerPerceptronClassifier
+from ann.Layers import InputLayer, LogisticRegressionLayer, LinearRegressionLayer, HiddenLayer, InvalidDimensionError
+from ann.MultiLayerPerceptron import MultiLayerPerceptron, InvalidNetworkError, InvalidDataError, \
+    NoDatasetFoundError, NoNumpyArrayError
 
 
 class MultiLayerPerceptronTest(unittest.TestCase):
@@ -12,14 +12,14 @@ class MultiLayerPerceptronTest(unittest.TestCase):
         network_specification = [InputLayer([2]), LinearRegressionLayer(2)]
 
         # Then
-        self.assertRaises(InvalidNetworkError, MultiLayerPerceptronRegressor,
+        self.assertRaises(InvalidNetworkError, MultiLayerPerceptron,
                           seed=1234,
                           network_specification=network_specification)
 
     def test_invalid_data_set_format(self):
         # Given
         training_set = [[[1]]]
-        multilayer_perceptron_regressor = MultiLayerPerceptronRegressor(seed=1234, network_specification=[InputLayer([1]), HiddenLayer(2), LinearRegressionLayer(1)])
+        multilayer_perceptron_regressor = MultiLayerPerceptron(seed=1234, network_specification=[InputLayer([1]), HiddenLayer(2), LinearRegressionLayer(1)])
 
         # Then
         self.assertRaises(InvalidDataError, multilayer_perceptron_regressor.train, training_set)
@@ -27,7 +27,7 @@ class MultiLayerPerceptronTest(unittest.TestCase):
     def test_missing_data_set(self):
         # Given
         training_set = []
-        multilayer_perceptron_regressor = MultiLayerPerceptronRegressor(seed=1234, network_specification=[InputLayer([1]), HiddenLayer(2), LinearRegressionLayer(1)])
+        multilayer_perceptron_regressor = MultiLayerPerceptron(seed=1234, network_specification=[InputLayer([1]), HiddenLayer(2), LinearRegressionLayer(1)])
 
         # Then
         self.assertRaises(NoDatasetFoundError, multilayer_perceptron_regressor.train, training_set)
@@ -35,7 +35,7 @@ class MultiLayerPerceptronTest(unittest.TestCase):
     def test_no_numpy_array(self):
         # Given
         training_set = [[[1, 2, 3, 4], [1, 2]]]
-        multilayer_perceptron_regressor = MultiLayerPerceptronRegressor(seed=1234, network_specification=[InputLayer([4]), HiddenLayer(2), LinearRegressionLayer(2)])
+        multilayer_perceptron_regressor = MultiLayerPerceptron(seed=1234, network_specification=[InputLayer([4]), HiddenLayer(2), LinearRegressionLayer(2)])
 
         # Then
         self.assertRaises(NoNumpyArrayError, multilayer_perceptron_regressor.train, training_set)
@@ -44,7 +44,7 @@ class MultiLayerPerceptronTest(unittest.TestCase):
         # Given
         training_set = np.array([[[1, 1], [2]]])
         network_specification = [InputLayer([3]), HiddenLayer(2), LinearRegressionLayer(1)]
-        multilayer_perceptron_regressor = MultiLayerPerceptronRegressor(seed=1234,
+        multilayer_perceptron_regressor = MultiLayerPerceptron(seed=1234,
                                                                         network_specification=network_specification)
 
         # Then
@@ -54,7 +54,7 @@ class MultiLayerPerceptronTest(unittest.TestCase):
         # Given
         training_set = np.array([[[1, 1], [2]]])
         network_specification = [InputLayer([2]), HiddenLayer(2), LinearRegressionLayer(2)]
-        multilayer_perceptron_regressor = MultiLayerPerceptronRegressor(seed=1234,
+        multilayer_perceptron_regressor = MultiLayerPerceptron(seed=1234,
                                                                         network_specification=network_specification)
 
         # Then
@@ -64,7 +64,7 @@ class MultiLayerPerceptronTest(unittest.TestCase):
         # Given
         training_set = np.array([[[1, 1], [2]]])
         network_specification = [InputLayer([2]), HiddenLayer(2), LinearRegressionLayer(2)]
-        multilayer_perceptron_classifier = MultiLayerPerceptronClassifier(seed=1234,
+        multilayer_perceptron_classifier = MultiLayerPerceptron(seed=1234,
                                                                           network_specification=network_specification)
 
         # Then
@@ -75,7 +75,7 @@ class MultiLayerPerceptronTest(unittest.TestCase):
         network_specification = [InputLayer([4]), HiddenLayer(3), LinearRegressionLayer(2)]
 
         # When
-        multilayer_perceptron_regressor = MultiLayerPerceptronRegressor(seed=1234,
+        multilayer_perceptron_regressor = MultiLayerPerceptron(seed=1234,
                                                                         network_specification=network_specification)
 
         # Then
@@ -92,7 +92,7 @@ class MultiLayerPerceptronTest(unittest.TestCase):
                                    [[1.0, 1.0], [0.0]]
                                    ])
 
-        multilayer_perceptron_regressor = MultiLayerPerceptronRegressor(seed=1234,
+        multilayer_perceptron_regressor = MultiLayerPerceptron(seed=1234,
                                                                         network_specification=network_specification)
 
         # When
@@ -115,7 +115,7 @@ class MultiLayerPerceptronTest(unittest.TestCase):
                                    [[1.0, 1.0], 0]
                                    ])
 
-        multilayer_perceptron_classifier = MultiLayerPerceptronClassifier(seed=1234,
+        multilayer_perceptron_classifier = MultiLayerPerceptron(seed=1234,
                                                                           network_specification=network_specification)
 
         # When

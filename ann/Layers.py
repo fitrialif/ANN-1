@@ -40,6 +40,11 @@ class InputLayer(object):
     def reshape(self, batch_size):
         return self.output_stream.reshape((batch_size, 1, self.output_shape[0], self.output_shape[1]))
 
+    def verify_dimensions(self, data_set):
+        if len(data_set[0][0]) != self.size:
+            raise InvalidDimensionError
+
+
 class HiddenLayer(object):
     def __init__(self, size):
         self.size = size
@@ -55,6 +60,7 @@ class HiddenLayer(object):
 class LinearRegressionLayer(object):
     def __init__(self, size):
         self.size = size
+        self.output_vector = tensor.matrix('y')
 
     def connect(self, seed, input_layer):
         n_in = input_layer.size
@@ -72,10 +78,16 @@ class LinearRegressionLayer(object):
     def cost(self, y):
         return tensor.mean((self.y_prediction - y) ** 2)  # TODO: add l1 and l2 reg
 
+    def verify_dimensions(self, data_set):
+        output_size = len(data_set[0][1])
+        if output_size != self.size:
+            raise InvalidDimensionError
+
 
 class LogisticRegressionLayer(object):
     def __init__(self, size):
         self.size = size
+        self.output_vector = tensor.lvector('y')
 
     def connect(self, seed, input_layer):
         n_in = input_layer.size
@@ -93,6 +105,11 @@ class LogisticRegressionLayer(object):
 
     def cost(self, y):
         return -tensor.mean(tensor.log(self.p_y_given_x)[tensor.arange(y.shape[0]), y])  # TODO: add l1 and l2 reg
+
+    def verify_dimensions(self, data_set):
+        number_of_classes = np.unique(data_set.T[1].tolist()).size
+        if number_of_classes != self.size:
+            raise InvalidDimensionError
 
 
 def _get_input_stream(batch_size, input_layer):
@@ -141,3 +158,8 @@ class LeNetConvPoolLayer(object):
         )
         # reshape bias to (1, n_filters, 1, 1) to broadcast to all batches and feature maps
         return tensor.tanh(pooled_out + self.params[1].dimshuffle('x', 0, 'x', 'x'))
+
+
+class InvalidDimensionError(Exception):
+    def __init__(self):
+        Exception.__init__(self, 'The input and output sizes of the data set do not match with the specified network')

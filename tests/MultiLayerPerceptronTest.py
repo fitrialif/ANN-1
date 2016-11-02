@@ -79,8 +79,8 @@ class MultiLayerPerceptronTest(unittest.TestCase):
                                                                         network_specification=network_specification)
 
         # Then
-        self.assertEqual(1, len(multilayer_perceptron_regressor._hidden_layers))
-        self.assertEqual(3, multilayer_perceptron_regressor._hidden_layers[0].size)
+        self.assertEqual(1, len(multilayer_perceptron_regressor._network_specification[1:-1]))
+        self.assertEqual(3, multilayer_perceptron_regressor._network_specification[1].size)
         self.assertEqual(2, multilayer_perceptron_regressor._output_layer.size)
 
     def test_XOR_problem_regression(self):

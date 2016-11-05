@@ -58,18 +58,30 @@ def _verify_and_prepare_data(data_set, network_specification):
 
 class MultiLayerPerceptron(object):
     def __init__(self, seed, network_specification):
-        # Assert network specification
+        """
+        Construct a fully functional multilayer perceptron based on a given network architecture
+
+        :param seed: A seed used to initialize the weights and biases of the layers randomly
+        :param network_specification: List of layers that specify the network architecture
+        """
         _verify_network_specification(network_specification)
 
-        # Build network
         self._network_specification = network_specification
         self._output_layer = network_specification[-1]
         self._output_vector = network_specification[-1].output_vector
 
-        # Set variables
         self._params = _init_params(seed, self._network_specification)
 
     def train(self, training_set, iterations=10, learning_rate=0.1, batch_size=1):
+        """
+        Train the neural network based on a provided training set
+
+        :param training_set: Training data used to train the network
+        :param iterations: Iterations of training on the provided data
+        :param learning_rate: Rate of parameter adjustment to implement gradient descent
+        :param batch_size: Size of training data that is grouped to average out parameter adjustments when running
+        gradient descent
+        """
         self._set_data_streams(batch_size)
         data_x, data_y, data_points = _verify_and_prepare_data(training_set, self._network_specification)
 
@@ -90,6 +102,12 @@ class MultiLayerPerceptron(object):
                 train_model(batch)
 
     def test(self, test_set, batch_size=1):
+        """
+        Test the performance of the neural network based on a provided testing set
+
+        :param test_set: Testing data used to measure the performance of the neural network
+        :param batch_size: Size of testing data that is evaluated simultaneously
+        """
         self._set_data_streams(batch_size)
         data_x, data_y, _ = _verify_and_prepare_data(test_set, self._network_specification)
 
@@ -105,6 +123,13 @@ class MultiLayerPerceptron(object):
         return np.mean(test_loss) * 100
 
     def predict(self, input_vector):
+        """
+        Return the predicted the outcome of given input data
+
+        :param input_vector: Vector that represents the input data
+        :return: Return the predicted value, this may be either a class or a continous value, dependingon the output
+        layer
+        """
         return self._predict(input_vector)
 
     def _set_data_streams(self, batch_size):

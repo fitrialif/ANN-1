@@ -168,15 +168,8 @@ class LeNetConvPoolLayer(object):
         return self.params
 
     def connect(self, input_layer):
-        convolve_out = conv2d(
-            input=_get_input_stream(self.batch_size, input_layer),
-            filters=self.params[0]
-        )
-        pooled_out = pool.pool_2d(
-            input=convolve_out,
-            ds=self.pool_size,
-            ignore_border=True
-        )
+        convolve_out = conv2d(input=_get_input_stream(self.batch_size, input_layer), filters=self.params[0])
+        pooled_out = pool.pool_2d(input=convolve_out, ds=self.pool_size, ignore_border=True)
         self.output_stream = tensor.tanh(pooled_out + self.params[1].dimshuffle('x', 0, 'x', 'x'))
         return self.output_stream
 

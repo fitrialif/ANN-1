@@ -22,8 +22,8 @@ def example_mlp(learning_rate=0.1, data_set='mnist.pkl.gz', batch_size=500):
 
     # Create network
     network_specification = [InputLayer([28, 28]),
-                             LeNetConvPoolLayer(feature_map=20, filter=(5, 5), pool=(2, 2)),
-                             LeNetConvPoolLayer(feature_map=50, filter=(5, 5), pool=(2, 2)),
+                             LeNetConvPoolLayer(feature_map=20, filter_shape=(5, 5), pool_size=(2, 2)),
+                             LeNetConvPoolLayer(feature_map=50, filter_shape=(5, 5), pool_size=(2, 2)),
                              HiddenLayer(500),
                              LogisticRegressionLayer(10)]
     neural_network = MultiLayerPerceptron(seed=1234, network_specification=network_specification)
@@ -32,7 +32,7 @@ def example_mlp(learning_rate=0.1, data_set='mnist.pkl.gz', batch_size=500):
     neural_network.train(training_set=training_set, learning_rate=learning_rate, batch_size=batch_size, iterations=1)
 
     # Test
-    print "Error rate of {}%".format(neural_network.test(test_set=test_set, batch_size=batch_size))
+    print "Error rate of {}%".format(neural_network.test(test_set=test_set, batch_size=1))
 
 
 if __name__ == '__main__':

@@ -2,10 +2,26 @@ import numpy as np
 import theano
 from theano import tensor as tensor
 
+from ann.Layers import LeNetConvPoolLayer
 
-def _connect_layers(seed, network_specification):
-    for index in xrange(1, len(network_specification)):
-        network_specification[index].connect(seed=seed, input_layer=network_specification[index - 1])
+
+def _init_params(seed, network_specification):
+    params = []
+    for index in range(1, len(network_specification)):
+        params += network_specification[index].init_weights(seed=seed, input_layer=network_specification[index - 1])
+    return params
+
+
+def _set_batch_size(network_specification, batch_size):
+    for layer in network_specification:
+        if isinstance(layer, LeNetConvPoolLayer):
+            layer.set_batch_size(batch_size)
+
+
+def _connect_layers(network_specification, batch_size):
+    _set_batch_size(network_specification, batch_size)
+    for index in range(1, len(network_specification)):
+        network_specification[index].connect(input_layer=network_specification[index - 1])
 
 
 def _verify_network_specification(network_specification):
@@ -15,29 +31,19 @@ def _verify_network_specification(network_specification):
 
 def _verify_data_set(data_set):
     if len(data_set) < 1:
-        raise NoDatasetFoundError
+        raise NoDataSetFoundError
     elif len(data_set[0]) != 2:
         raise InvalidDataError
-
-
-def _collection_params(network_specification):
-    params = []
-    for layer in network_specification[1:]:
-        params = params + layer.params  # TODO: extend isn't supported for list comprehension?
-    return params
 
 
 def _prepare_data(data_set):
     try:
         data_set = data_set.T
-
         # TODO: I need to convert tolist before to array because lowest level is list?
         data_x = np.asarray(data_set[0].tolist())
         data_y = np.asarray(data_set[1].tolist())
-
         shared_x = theano.shared(data_x, borrow=True)
         shared_y = theano.shared(data_y, borrow=True)
-
         return shared_x, shared_y, len(data_x)
     except AttributeError:
         raise NoNumpyArrayError
@@ -57,19 +63,14 @@ class MultiLayerPerceptron(object):
 
         # Build network
         self._network_specification = network_specification
-        self._output_layer = self._network_specification[-1]
+        self._output_layer = network_specification[-1]
         self._output_vector = network_specification[-1].output_vector
 
-        _connect_layers(seed, self._network_specification)
-        self._params = _collection_params(self._network_specification)
-
-        # Prediction function
-        self._input_vector = self._network_specification[0].output_stream
-        self._predict = theano.function(inputs=[self._input_vector],
-                                        outputs=self._output_layer.predict()
-                                        )
+        # Set variables
+        self._params = _init_params(seed, self._network_specification)
 
     def train(self, training_set, iterations=10, learning_rate=0.1, batch_size=1):
+        self._set_data_streams(batch_size)
         data_x, data_y, data_points = _verify_and_prepare_data(training_set, self._network_specification)
 
         cost_function = self._output_layer.cost(self._output_vector)
@@ -85,12 +86,11 @@ class MultiLayerPerceptron(object):
                                       })
 
         for i in range(iterations):
-            if i % 10 == 0:
-                print "iteration " + str(i + 1) + "/" + str(iterations)
             for batch in range(data_points / batch_size):
                 train_model(batch)
 
     def test(self, test_set, batch_size=1):
+        self._set_data_streams(batch_size)
         data_x, data_y, _ = _verify_and_prepare_data(test_set, self._network_specification)
 
         index = tensor.lscalar()
@@ -107,11 +107,12 @@ class MultiLayerPerceptron(object):
     def predict(self, input_vector):
         return self._predict(input_vector)
 
-    def _add_output_layer(self, seed, hidden_layers):
-        self._network_specification[-1].connect(seed=seed,
-                                                input_layer=hidden_layers[-1]
-                                                )
-        return self._network_specification[-1]
+    def _set_data_streams(self, batch_size):
+        _connect_layers(self._network_specification, batch_size)
+        self._input_vector = self._network_specification[0].output_stream
+        self._predict = theano.function(inputs=[self._input_vector],
+                                        outputs=self._output_layer.predict()
+                                        )
 
 
 class InvalidNetworkError(Exception):
@@ -129,6 +130,6 @@ class NoNumpyArrayError(Exception):
         Exception.__init__(self, 'Data should consist of numpy arrays')
 
 
-class NoDatasetFoundError(Exception):
+class NoDataSetFoundError(Exception):
     def __init__(self):
         Exception.__init__(self, 'No input data has been found')

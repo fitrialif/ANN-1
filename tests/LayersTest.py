@@ -9,7 +9,7 @@ class HiddenLayerTest(unittest.TestCase):
         hidden_layer = HiddenLayer(3)
 
         # When
-        hidden_layer.connect(seed=1234, input_layer=input_layer)
+        hidden_layer.init_weights(seed=1234, input_layer=input_layer)
 
         # Then
         params = hidden_layer.params
@@ -26,16 +26,14 @@ class HiddenLayerTest(unittest.TestCase):
 class LinearRegressionLayerTest(unittest.TestCase):
     def test_initialization(self):
         # Given, a total of 6 in and out will result into weights between -1 and 1 according to xavier method
-        input_layer = InputLayer([3])
         hidden_layer = HiddenLayer(3)
-        hidden_layer.connect(seed=1234, input_layer=input_layer)
         linear_regression_layer = LinearRegressionLayer(3)
 
         # When
-        linear_regression_layer.connect(seed=1234, input_layer=hidden_layer)
+        linear_regression_layer.init_weights(seed=1234, input_layer=hidden_layer)
 
         # Then
-        params = hidden_layer.params
+        params = linear_regression_layer.params
         weights = params[0].eval()
         for column in weights:
             for value in column:
@@ -49,16 +47,14 @@ class LinearRegressionLayerTest(unittest.TestCase):
 class LogisticRegressionTest(unittest.TestCase):
     def test_initialization(self):
         # Given, a total of 6 in and out will result into weights between -1 and 1 according to xavier method
-        input_layer = InputLayer([3])
         hidden_layer = HiddenLayer(3)
-        hidden_layer.connect(seed=1234, input_layer=input_layer)
         linear_regression_layer = LogisticRegressionLayer(3)
 
         # When
-        linear_regression_layer.connect(seed=1234, input_layer=hidden_layer)
+        linear_regression_layer.init_weights(seed=1234, input_layer=hidden_layer)
 
         # Then
-        params = hidden_layer.params
+        params = linear_regression_layer.params
         weights = params[0].eval()
         for column in weights:
             for value in column:
@@ -73,12 +69,10 @@ class LeNetConvPoolLayerTest(unittest.TestCase):
     def test_initialization(self):
         # Given
         input_layer = InputLayer([4, 4])
+        conv_layer = LeNetConvPoolLayer(feature_map=1, filter_shape=(2, 2), pool_size=(1, 2))
 
-        conv_layer = LeNetConvPoolLayer(feature_map=1, filter=(2, 2), pool=(1, 2))
-        conv_layer.connect(seed=1234, input_layer=input_layer)
-
-        hidden_layer = HiddenLayer(1)
-        hidden_layer.connect(seed=1234, input_layer=conv_layer)
+        # When
+        conv_layer.init_weights(seed=1234, input_layer=input_layer)
 
         # Then
         params = conv_layer.params

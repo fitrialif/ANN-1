@@ -48,26 +48,38 @@ class InputLayer(object):
 class HiddenLayer(object):
     def __init__(self, size):
         self.size = size
+        self.params = None
+        self.output_stream = None
 
-    def connect(self, seed, input_layer):
+    def init_weights(self, seed, input_layer):
         n_in = input_layer.size
         weights, bias = _init_params(n_in, self.size, (n_in, self.size), seed, self.size)
-
-        self.output_stream = tensor.tanh(tensor.dot(input_layer.output_stream.flatten(2), weights) + bias)
         self.params = [weights, bias]
+        return self.params
+
+    def connect(self, input_layer):
+        weights = self.params[0]
+        bias = self.params[1]
+        self.output_stream = tensor.tanh(tensor.dot(input_layer.output_stream.flatten(2), weights) + bias)
 
 
 class LinearRegressionLayer(object):
     def __init__(self, size):
         self.size = size
         self.output_vector = tensor.matrix('y')
+        self.params = None
+        self.y_prediction = None
 
-    def connect(self, seed, input_layer):
+    def init_weights(self, seed, input_layer):
         n_in = input_layer.size
         weights, bias = _init_params(n_in, self.size, (n_in, self.size), seed, self.size)
-
-        self.y_prediction = tensor.dot(input_layer.output_stream, weights) + bias
         self.params = [weights, bias]
+        return self.params
+
+    def connect(self, input_layer):
+        weights = self.params[0]
+        bias = self.params[1]
+        self.y_prediction = tensor.dot(input_layer.output_stream, weights) + bias
 
     def predict(self):
         return self.y_prediction
@@ -88,14 +100,21 @@ class LogisticRegressionLayer(object):
     def __init__(self, size):
         self.size = size
         self.output_vector = tensor.lvector('y')
+        self.params = None
+        self.p_y_given_x = None
+        self.y_prediction = None
 
-    def connect(self, seed, input_layer):
+    def init_weights(self, seed, input_layer):
         n_in = input_layer.size
         weights, bias = _init_params(n_in, self.size, (n_in, self.size), seed, self.size)
+        self.params = [weights, bias]
+        return self.params
 
+    def connect(self, input_layer):
+        weights = self.params[0]
+        bias = self.params[1]
         self.p_y_given_x = tensor.nnet.softmax(tensor.dot(input_layer.output_stream, weights) + bias)
         self.y_prediction = tensor.argmax(self.p_y_given_x, axis=1)
-        self.params = [weights, bias]
 
     def predict(self):
         return self.y_prediction
@@ -124,40 +143,45 @@ def _get_output_shape(input_shape, filter_shape, pool_size):
     return (input_shape[0] - filter_shape[0] + 1) / pool_size[0], (input_shape[1] - filter_shape[1] + 1) / pool_size[1]
 
 
+# TODO: loads of refactor
 class LeNetConvPoolLayer(object):
-    def __init__(self, feature_map, filter, pool):
+    def __init__(self, feature_map, filter_shape, pool_size):
         self.feature_maps = feature_map
-        self.filter_shape = filter
-        self.pool_size = pool
+        self.filter_shape = filter_shape
+        self.pool_size = pool_size
+        self.output_shape = None
+        self.size = None
+        self.params = None
+        self.output_stream = None
+        self.batch_size = None
 
-    # TODO: remove batch_size and refactor
-    def connect(self, seed, input_layer, batch_size=500):
-        n_in_feature_maps = input_layer.feature_maps
+    def init_weights(self, seed, input_layer):
         input_shape = input_layer.output_shape
+        self.output_shape = _get_output_shape(input_shape, self.filter_shape, self.pool_size)
+        self.size = self.feature_maps * self.output_shape[0] * self.output_shape[1]
 
+        n_in_feature_maps = input_layer.feature_maps
         all_filters_shape = (self.feature_maps, n_in_feature_maps, self.filter_shape[0], self.filter_shape[1])
         n_in, n_out = _get_in_out_size(n_in_feature_maps, self.feature_maps, self.filter_shape, self.pool_size)
         weights, bias = _init_params(n_in, n_out, all_filters_shape, seed, self.feature_maps)
         self.params = [weights, bias]
+        return self.params
 
-        self.output_stream = self._set_output_stream(batch_size, input_layer)
-        self.output_shape = _get_output_shape(input_shape, self.filter_shape, self.pool_size)
-        self.size = self.feature_maps * self.output_shape[0] * self.output_shape[1]
-
-    def _set_output_stream(self, batch_size, input_layer):
-        # convolve input feature maps with filters
+    def connect(self, input_layer):
         convolve_out = conv2d(
-            input=_get_input_stream(batch_size, input_layer),
+            input=_get_input_stream(self.batch_size, input_layer),
             filters=self.params[0]
         )
-        # pool each feature map individually, using max pooling
         pooled_out = pool.pool_2d(
             input=convolve_out,
             ds=self.pool_size,
             ignore_border=True
         )
-        # reshape bias to (1, n_filters, 1, 1) to broadcast to all batches and feature maps
-        return tensor.tanh(pooled_out + self.params[1].dimshuffle('x', 0, 'x', 'x'))
+        self.output_stream = tensor.tanh(pooled_out + self.params[1].dimshuffle('x', 0, 'x', 'x'))
+        return self.output_stream
+
+    def set_batch_size(self, batch_size):
+        self.batch_size = batch_size
 
 
 class InvalidDimensionError(Exception):

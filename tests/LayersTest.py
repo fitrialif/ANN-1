@@ -87,5 +87,4 @@ class LeNetConvPoolLayerTest(unittest.TestCase):
         for b in bias:
             self.assertEqual(b, 0)
 
-        self.assertEqual((3, 1), conv_layer.output_shape)
         self.assertEqual(3, conv_layer.size)

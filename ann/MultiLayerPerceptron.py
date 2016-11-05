@@ -21,7 +21,7 @@ def _set_batch_size(network_specification, batch_size):
 def _connect_layers(network_specification, batch_size):
     _set_batch_size(network_specification, batch_size)
     for index in range(1, len(network_specification)):
-        network_specification[index].connect(input_layer=network_specification[index - 1])
+        network_specification[index].connect()
 
 
 def _verify_network_specification(network_specification):
@@ -127,7 +127,7 @@ class MultiLayerPerceptron(object):
         Return the predicted the outcome of given input data
 
         :param input_vector: Vector that represents the input data
-        :return: Return the predicted value, this may be either a class or a continous value, dependingon the output
+        :return: Return the predicted value, this may be either a class or a continuous value, depending on the output
         layer
         """
         return self._predict(input_vector)

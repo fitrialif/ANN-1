@@ -2,7 +2,7 @@ import six.moves.cPickle as pickle
 import gzip
 import numpy as np
 
-from ann.Layers import LeNetConvPoolLayer, InputLayer, HiddenLayer, LogisticRegressionLayer
+from ann.Layers import InputLayer, HiddenLayer, LogisticRegressionLayer
 from ann.MultiLayerPerceptron import MultiLayerPerceptron
 
 

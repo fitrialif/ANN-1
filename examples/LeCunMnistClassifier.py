@@ -16,7 +16,7 @@ def load_data(data_set):
     return format_data_set(train_set), format_data_set(test_set)
 
 
-def example_mlp(data_set='../data/mnist.pkl.gz'):
+def le_cun_minst_classifier(data_set='../data/mnist.pkl.gz'):
     # Prepare data
     training_set, test_set = load_data(data_set)
 
@@ -38,4 +38,4 @@ def example_mlp(data_set='../data/mnist.pkl.gz'):
 
 
 if __name__ == '__main__':
-    example_mlp()
+    le_cun_minst_classifier()

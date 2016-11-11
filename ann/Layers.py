@@ -268,12 +268,13 @@ class LeNetConvPoolLayer(object):
         self.output_stream = None
         self.batch_size = None
         self.input_layer = None
+        self.output_shape = None
 
     def init_weights(self, seed, input_layer):
         self.input_layer = input_layer
 
-        output_shape = _get_output_shape(input_layer.output_shape, self.filter_shape, self.pool_size)
-        self.size = self.feature_maps * output_shape[0] * output_shape[1]
+        self.output_shape = _get_output_shape(input_layer.output_shape, self.filter_shape, self.pool_size)
+        self.size = self.feature_maps * self.output_shape[0] * self.output_shape[1]
 
         n_in_feature_maps = input_layer.feature_maps
         all_filters_shape = (self.feature_maps, n_in_feature_maps, self.filter_shape[0], self.filter_shape[1])

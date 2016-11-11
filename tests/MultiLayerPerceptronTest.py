@@ -150,7 +150,7 @@ class MultiLayerPerceptronTest(unittest.TestCase):
 
     def test_mnist_classifier(self):
         # Given
-        training_set, test_set = _load_data('mnist.pkl.gz')
+        training_set, test_set = _load_data('../data/mnist.pkl.gz')
 
         network_specification = [InputLayer([28, 28]),
                                  LeNetConvPoolLayer(feature_map=2, filter_shape=(5, 5), pool_size=(2, 2)),

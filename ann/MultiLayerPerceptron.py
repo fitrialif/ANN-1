@@ -98,6 +98,7 @@ class MultiLayerPerceptron(object):
                                       })
 
         for i in range(iterations):
+            print "Iteration {}".format(i)
             for batch in range(data_points / batch_size):
                 train_model(batch)
 

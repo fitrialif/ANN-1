@@ -1,5 +1,5 @@
 # ANN: simple construction of artificial neural networks
-A toy project that simplifies construction of neural networks by allowing a user to specify layers in a list. Hyperparameters can be passed in to the specific layers or to the train method.
+A toy project that simplifies construction of neural networks by allowing a user to specify layers in a list. Hyperparameters can be passed in to the specific layers or to the train method. This is essentially a very simplified version of the Keras library, before I knenw it existed.
 
 ## Example use
 We can construct a convolution network used to classify the Mnist data set in just a couple of lines:
